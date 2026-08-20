@@ -2,7 +2,14 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, AlertCircle, Loader2 } from 'lucide-react';
+import { Mail, Lock, HeartPulse } from 'lucide-react';
+import Button from '../components/ui/Button';
+import Card from '../components/ui/Card';
+import Alert from '../components/ui/Alert';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
+
+const inputClass =
+  'block w-full pl-10 pr-3.5 py-2.5 border border-border rounded-lg text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors text-main placeholder:text-slate-400';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -16,13 +23,13 @@ const Login = () => {
     e.preventDefault();
     setError('');
     if (!email || !password) return setError('Please fill in all fields');
-    
+
     setLoading(true);
     try {
       const res = await api.post('/auth/login', { email, password });
       const { token, ...userData } = res.data;
       login(userData, token);
-      
+
       const role = userData.role;
       if (role === 'ADMIN') navigate('/admin');
       else if (role === 'DOCTOR') navigate('/doctor');
@@ -36,67 +43,85 @@ const Login = () => {
 
   return (
     <div className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-slate-50">
-      <div className="max-w-md w-full bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
+      <div className="max-w-md w-full">
+        {/* Brand Header */}
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-slate-900">Welcome Back</h2>
-          <p className="text-slate-500 mt-2">Sign in to your HealthSync account</p>
+          <Link to="/" className="inline-flex items-center gap-2 mb-3">
+            <HeartPulse className="w-8 h-8 text-primary" />
+            <span className="text-2xl font-bold text-main tracking-tight">HealthSync</span>
+          </Link>
+          <h1 className="text-xl font-bold text-main">Welcome back</h1>
+          <p className="text-sm text-muted mt-1">Sign in to your HealthSync account</p>
         </div>
 
-        {error && (
-          <div className="bg-red-50 text-red-700 p-4 rounded-lg flex items-start gap-3 mb-6 border border-red-100">
-            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-            <span className="text-sm font-medium">{error}</span>
-          </div>
-        )}
+        <Card padding="p-8" className="shadow-sm border-border bg-surface">
+          {error && <Alert type="error" message={error} className="mb-6" />}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email address</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Mail className="h-5 w-5 text-slate-400" />
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-main mb-1.5">
+                Email address
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <Mail className="h-4 w-4" />
+                </div>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={inputClass}
+                  placeholder="you@example.com"
+                />
               </div>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary sm:text-sm outline-none transition-shadow bg-slate-50 focus:bg-white"
-                placeholder="you@example.com"
-              />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Lock className="h-5 w-5 text-slate-400" />
+            <div>
+              <label className="block text-sm font-medium text-main mb-1.5">
+                Password
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <Lock className="h-4 w-4" />
+                </div>
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={inputClass}
+                  placeholder="••••••••"
+                />
               </div>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary sm:text-sm outline-none transition-shadow bg-slate-50 focus:bg-white"
-                placeholder="••••••••"
-              />
             </div>
+
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={loading}
+              className="w-full justify-center py-2.5 gap-2 mt-2"
+            >
+              {loading ? (
+                <>
+                  <LoadingSpinner size="sm" className="text-white" />
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                'Sign In'
+              )}
+            </Button>
+          </form>
+
+          <div className="mt-6 pt-6 border-t border-border text-center">
+            <p className="text-sm text-muted">
+              Don't have an account?{' '}
+              <Link to="/register" className="font-semibold text-primary hover:text-primary-dark transition-colors">
+                Create one now
+              </Link>
+            </p>
           </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Sign in'}
-          </button>
-        </form>
-
-        <p className="mt-6 text-center text-sm text-slate-600">
-          Don't have an account?{' '}
-          <Link to="/register" className="font-medium text-primary hover:text-primary-dark">
-            Register now
-          </Link>
-        </p>
+        </Card>
       </div>
     </div>
   );

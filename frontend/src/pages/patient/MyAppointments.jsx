@@ -1,14 +1,29 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../../services/api';
-import { Calendar, Clock, FileText, Activity, AlertTriangle, Loader2, XCircle } from 'lucide-react';
+import { Calendar, Clock, FileText, Activity, CalendarPlus, User } from 'lucide-react';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import Badge from '../../components/ui/Badge';
+import Alert from '../../components/ui/Alert';
+import EmptyState from '../../components/ui/EmptyState';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
+
+// Map appointment status to Badge variant
+const statusVariant = (status) => {
+  if (status === 'BOOKED') return 'info';
+  if (status === 'COMPLETED') return 'success';
+  if (status === 'CANCELLED') return 'error';
+  return 'neutral';
+};
 
 const MyAppointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [actionLoading, setActionLoading] = useState(null); // stores appointment ID
+  const [actionLoading, setActionLoading] = useState(null);
 
-  // Reschedule states
+  // Reschedule states — preserved exactly
   const [rescheduleId, setRescheduleId] = useState(null);
   const [newDate, setNewDate] = useState('');
   const [availableSlots, setAvailableSlots] = useState([]);
@@ -82,157 +97,252 @@ const MyAppointments = () => {
     }
   };
 
-  const getUrgencyColor = (level) => {
-    if (level === 'High') return 'bg-red-100 text-red-800 border-red-200';
-    if (level === 'Medium') return 'bg-orange-100 text-orange-800 border-orange-200';
-    if (level === 'Low') return 'bg-green-100 text-green-800 border-green-200';
-    return 'bg-slate-100 text-slate-800 border-slate-200';
-  };
+  const upcomingAppts = appointments.filter(a => a.status === 'BOOKED');
+  const pastAppts = appointments.filter(a => a.status !== 'BOOKED');
 
   if (loading) {
-    return <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
-  }
-
-  if (error) {
-    return <div className="p-4 bg-red-50 text-red-700 rounded-lg border border-red-100">{error}</div>;
+    return <LoadingSpinner fullScreen />;
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-slate-900">My Appointments</h2>
+    <div className="w-full pb-8 space-y-8">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-2xl font-bold text-main">My Appointments</h1>
+        <p className="text-muted mt-1 text-sm">View and manage your upcoming and past appointments.</p>
+      </div>
 
-      {appointments.length === 0 ? (
-        <div className="bg-white p-12 rounded-2xl shadow-sm border border-slate-200 text-center">
-          <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500 font-medium">Your upcoming appointments will appear here.</p>
+      {error && <Alert type="error" message={error} />}
+
+      {/* Upcoming Appointments */}
+      <section>
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="text-base font-bold text-main uppercase tracking-wider">Upcoming Appointments</h2>
+          {upcomingAppts.length > 0 && (
+            <span className="text-xs font-bold bg-primary/10 text-primary px-2.5 py-0.5 rounded-full">
+              {upcomingAppts.length}
+            </span>
+          )}
         </div>
-      ) : (
-        <div className="grid gap-6">
-          {appointments.map(appt => (
-            <div key={appt.id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 overflow-hidden relative">
-              {/* Status Indicator Bar */}
-              <div className={`absolute top-0 left-0 w-1 h-full ${
-                appt.status === 'BOOKED' ? 'bg-primary' : 
-                appt.status === 'COMPLETED' ? 'bg-green-500' : 'bg-red-500'
-              }`}></div>
 
-              <div className="pl-4 flex flex-col md:flex-row justify-between gap-4">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <h3 className="text-lg font-bold text-slate-900">{appt.doctor_name}</h3>
-                    <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${
-                      appt.status === 'BOOKED' ? 'bg-sky-100 text-sky-800' : 
-                      appt.status === 'COMPLETED' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {appt.status}
-                    </span>
-                  </div>
-                  
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-slate-600">
-                    <div className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> {new Date(appt.appointment_date).toLocaleDateString()}</div>
-                    <div className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> {appt.start_time.substring(0,5)}</div>
+        {upcomingAppts.length === 0 ? (
+          <EmptyState
+            icon={Calendar}
+            title="No upcoming appointments"
+            description="You don't have any upcoming appointments scheduled."
+            action={
+              <Link to="/patient/book">
+                <Button variant="primary" className="gap-2">
+                  <CalendarPlus className="w-4 h-4" />
+                  Book an Appointment
+                </Button>
+              </Link>
+            }
+          />
+        ) : (
+          <div className="space-y-4">
+            {upcomingAppts.map(appt => (
+              <Card key={appt.id} padding="p-0" className="overflow-hidden relative">
+                {/* Status bar */}
+                <div className="absolute top-0 left-0 w-1.5 h-full bg-primary" />
+
+                <div className="p-5 pl-7">
+                  {/* Header row */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                        <User className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-main leading-tight">{appt.doctor_name}</h3>
+                        <p className="text-sm text-muted">{appt.specialization}</p>
+                      </div>
+                    </div>
+                    <Badge variant={statusVariant(appt.status)}>{appt.status}</Badge>
                   </div>
 
+                  {/* Date / Time row */}
+                  <div className="flex flex-wrap gap-4 text-sm text-muted mb-4">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-4 h-4 text-primary" />
+                      <span className="font-medium text-main">
+                        {new Date(appt.appointment_date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Clock className="w-4 h-4 text-primary" />
+                      <span className="font-medium text-main">
+                        {appt.start_time.substring(0,5)} – {appt.end_time.substring(0,5)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Symptoms */}
                   {appt.symptoms && (
-                    <div className="mt-4 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                      <p className="text-sm font-semibold text-slate-700 flex items-center gap-2"><Activity className="w-4 h-4" /> Symptoms Provided</p>
-                      <p className="text-sm text-slate-600 mt-1">{appt.symptoms}</p>
+                    <div className="mb-4 bg-slate-50 p-3 rounded-lg border border-border">
+                      <p className="text-xs font-semibold text-muted uppercase tracking-wider flex items-center gap-1.5 mb-1">
+                        <Activity className="w-3.5 h-3.5" /> Symptoms
+                      </p>
+                      <p className="text-sm text-main">{appt.symptoms}</p>
                     </div>
                   )}
 
-                  {/* AI & Clinical Details if COMPLETED */}
-                  {appt.status === 'COMPLETED' && (
-                    <div className="mt-6 space-y-4 border-t pt-4">
-                      {appt.ai_postvisit_summary && (
-                        <div className="bg-sky-50 p-4 rounded-xl border border-sky-100">
-                          <p className="text-sm font-bold text-primary flex items-center gap-2 mb-2">
-                            <FileText className="w-4 h-4" /> AI Visit Summary
-                          </p>
-                          <p className="text-sm text-slate-700 whitespace-pre-wrap">{appt.ai_postvisit_summary}</p>
-                        </div>
-                      )}
-                      
-                      {appt.prescription && (
-                        <div className="bg-white p-4 rounded-xl border border-slate-200">
-                          <p className="text-sm font-bold text-slate-800 mb-2">Prescription</p>
-                          <p className="text-sm text-slate-600 whitespace-pre-wrap">{appt.prescription}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Actions */}
-                <div className="flex-shrink-0 flex flex-col justify-start items-end gap-2">
-                  {appt.status === 'BOOKED' && (
-                    <>
-                      <button
-                        onClick={() => { setRescheduleId(appt.id); setNewDate(''); setRescheduleSlot(null); setAvailableSlots([]); }}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary bg-sky-50 hover:bg-sky-100 rounded-lg transition-colors border border-sky-100 w-full justify-center"
-                      >
-                        <Clock className="w-4 h-4" />
-                        Reschedule
-                      </button>
-                      <button
-                        onClick={() => handleCancel(appt.id)}
-                        disabled={actionLoading === appt.id}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-red-100 disabled:opacity-50 w-full justify-center"
-                      >
-                        {actionLoading === appt.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
-                        Cancel
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* Reschedule Modal/Inline form */}
-              {rescheduleId === appt.id && (
-                <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200 shadow-inner">
-                  <h4 className="text-sm font-bold text-slate-800 mb-3">Reschedule Appointment</h4>
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <input
-                      type="date"
-                      min={new Date().toISOString().split('T')[0]}
-                      value={newDate}
-                      onChange={(e) => fetchSlots(appt.doctor_id, e.target.value)}
-                      className="px-3 py-2 border border-slate-300 rounded-lg text-sm flex-grow"
-                    />
-                      <select
-                        value={rescheduleSlot ? rescheduleSlot.start : ''}
-                        onChange={(e) => {
-                          const slot = availableSlots.find(s => s.start === e.target.value);
-                          setRescheduleSlot(slot);
-                        }}
-                        className="px-3 py-2 border border-slate-300 rounded-lg text-sm flex-grow"
-                      >
-                        <option value="">-- Select Slot --</option>
-                        {availableSlots.map((s, i) => (
-                          <option key={i} value={s.start}>{s.start.substring(0,5)}</option>
-                        ))}
-                      </select>
-                    <button
-                      onClick={() => handleReschedule(appt.id)}
-                      disabled={actionLoading === appt.id || !newDate || !rescheduleSlot}
-                      className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-dark disabled:opacity-50 transition-colors"
+                  {/* Actions */}
+                  <div className="flex flex-wrap gap-3 pt-1">
+                    <Button
+                      variant="outline"
+                      className="text-sm gap-2"
+                      onClick={() => {
+                        setRescheduleId(appt.id);
+                        setNewDate('');
+                        setRescheduleSlot(null);
+                        setAvailableSlots([]);
+                        setSlotError('');
+                      }}
                     >
-                      {actionLoading === appt.id ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Confirm'}
-                    </button>
+                      <Clock className="w-4 h-4" />
+                      Reschedule
+                    </Button>
                     <button
-                      onClick={() => setRescheduleId(null)}
-                      className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
+                      className="inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors px-4 py-2 text-sm h-10 text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={actionLoading === appt.id}
+                      onClick={() => handleCancel(appt.id)}
                     >
+                      {actionLoading === appt.id ? (
+                        <LoadingSpinner size="sm" />
+                      ) : null}
                       Cancel
                     </button>
                   </div>
-                  {slotError && <p className="text-xs text-red-500 mt-2">{slotError}</p>}
-                </div>
-              )}
 
-            </div>
-          ))}
+                  {/* Inline Reschedule Panel */}
+                  {rescheduleId === appt.id && (
+                    <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-border">
+                      <h4 className="text-sm font-bold text-main mb-3">Reschedule Appointment</h4>
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <input
+                          type="date"
+                          min={new Date().toISOString().split('T')[0]}
+                          value={newDate}
+                          onChange={(e) => fetchSlots(appt.doctor_id, e.target.value)}
+                          className="px-3 py-2 border border-border rounded-lg text-sm flex-grow focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-surface"
+                        />
+                        <select
+                          value={rescheduleSlot ? rescheduleSlot.start : ''}
+                          onChange={(e) => {
+                            const slot = availableSlots.find(s => s.start === e.target.value);
+                            setRescheduleSlot(slot);
+                          }}
+                          className="px-3 py-2 border border-border rounded-lg text-sm flex-grow focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary bg-surface"
+                        >
+                          <option value="">-- Select Slot --</option>
+                          {availableSlots.map((s, i) => (
+                            <option key={i} value={s.start}>{s.start.substring(0,5)}</option>
+                          ))}
+                        </select>
+                        <Button
+                          variant="primary"
+                          className="text-sm"
+                          disabled={actionLoading === appt.id || !newDate || !rescheduleSlot}
+                          onClick={() => handleReschedule(appt.id)}
+                        >
+                          {actionLoading === appt.id ? <LoadingSpinner size="sm" className="text-white" /> : 'Confirm'}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="text-sm"
+                          onClick={() => setRescheduleId(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                      {slotError && <p className="text-xs text-error mt-2">{slotError}</p>}
+                    </div>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Past Appointments */}
+      <section>
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="text-base font-bold text-muted uppercase tracking-wider">Past Appointments</h2>
+          {pastAppts.length > 0 && (
+            <span className="text-xs font-bold bg-slate-100 text-muted px-2.5 py-0.5 rounded-full">
+              {pastAppts.length}
+            </span>
+          )}
         </div>
-      )}
+
+        {pastAppts.length === 0 ? (
+          <EmptyState
+            icon={Clock}
+            title="No past appointments"
+            description="Your completed and cancelled appointments will appear here."
+          />
+        ) : (
+          <div className="space-y-3">
+            {pastAppts.map(appt => {
+              const barColor =
+                appt.status === 'COMPLETED' ? 'bg-success' : 'bg-error';
+
+              return (
+                <Card key={appt.id} padding="p-0" className="overflow-hidden relative opacity-90">
+                  <div className={`absolute top-0 left-0 w-1.5 h-full ${barColor}`} />
+
+                  <div className="p-5 pl-7">
+                    {/* Header row */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                      <div>
+                        <h3 className="font-semibold text-main leading-tight">{appt.doctor_name}</h3>
+                        <p className="text-sm text-muted">{appt.specialization}</p>
+                      </div>
+                      <Badge variant={statusVariant(appt.status)}>{appt.status}</Badge>
+                    </div>
+
+                    {/* Date / Time row */}
+                    <div className="flex flex-wrap gap-4 text-sm text-muted">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="w-4 h-4" />
+                        <span>
+                          {new Date(appt.appointment_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <Clock className="w-4 h-4" />
+                        <span>{appt.start_time.substring(0,5)} – {appt.end_time.substring(0,5)}</span>
+                      </div>
+                    </div>
+
+                    {/* COMPLETED — AI summary + prescription */}
+                    {appt.status === 'COMPLETED' && (
+                      <div className="mt-4 space-y-3 border-t border-border pt-4">
+                        {appt.ai_postvisit_summary && (
+                          <div className="bg-sky-50 p-4 rounded-xl border border-sky-100">
+                            <p className="text-xs font-bold text-primary flex items-center gap-2 mb-2 uppercase tracking-wider">
+                              <FileText className="w-3.5 h-3.5" /> AI Visit Summary
+                            </p>
+                            <p className="text-sm text-main whitespace-pre-wrap">{appt.ai_postvisit_summary}</p>
+                          </div>
+                        )}
+                        {appt.prescription && (
+                          <div className="bg-surface p-4 rounded-xl border border-border">
+                            <p className="text-xs font-bold text-main mb-2 uppercase tracking-wider">Prescription</p>
+                            <p className="text-sm text-muted whitespace-pre-wrap">{appt.prescription}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </section>
     </div>
   );
 };

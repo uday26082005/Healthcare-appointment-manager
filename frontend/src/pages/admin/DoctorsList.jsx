@@ -1,12 +1,20 @@
 import { useState, useEffect } from 'react';
 import api from '../../services/api';
-import { Loader2, UserPlus, Clock, Stethoscope, AlertCircle } from 'lucide-react';
+import { UserPlus, Clock, Stethoscope } from 'lucide-react';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import Alert from '../../components/ui/Alert';
+import EmptyState from '../../components/ui/EmptyState';
+import LoadingSpinner from '../../components/ui/LoadingSpinner';
+
+const inputClass =
+  'block w-full px-3 py-2.5 border border-border rounded-lg text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors';
 
 const DoctorsList = () => {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   const [showAdd, setShowAdd] = useState(false);
   const [newDoctor, setNewDoctor] = useState({
     name: '',
@@ -54,101 +62,171 @@ const DoctorsList = () => {
     }
   };
 
-  if (loading) return <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-slate-900">Manage Doctors</h2>
-        <button 
+    <div className="w-full pb-8 space-y-6">
+
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-main">Doctors</h1>
+          <p className="text-sm text-muted mt-1">Manage registered doctors and their availability.</p>
+        </div>
+        <Button
+          variant={showAdd ? 'outline' : 'primary'}
           onClick={() => setShowAdd(!showAdd)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors shadow-sm"
+          className="gap-2 flex-shrink-0"
         >
           <UserPlus className="w-4 h-4" />
-          {showAdd ? 'Cancel' : 'Add Doctor Profile'}
-        </button>
+          {showAdd ? 'Cancel' : 'Add Doctor'}
+        </Button>
       </div>
 
+      {/* Add Doctor Form */}
       {showAdd && (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">Create Doctor Profile</h3>
-          <form onSubmit={handleAddSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
-              <input type="text" required value={newDoctor.name} onChange={e => setNewDoctor({...newDoctor, name: e.target.value})} className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary sm:text-sm bg-slate-50" placeholder="Dr. John Doe" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
-              <input type="email" required value={newDoctor.email} onChange={e => setNewDoctor({...newDoctor, email: e.target.value})} className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary sm:text-sm bg-slate-50" placeholder="doctor@example.com" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
-              <input type="password" required value={newDoctor.password} onChange={e => setNewDoctor({...newDoctor, password: e.target.value})} className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary sm:text-sm bg-slate-50" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Specialization</label>
-              <input type="text" required value={newDoctor.specialization} onChange={e => setNewDoctor({...newDoctor, specialization: e.target.value})} className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary sm:text-sm bg-slate-50" placeholder="E.g. Cardiologist" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Working Hours Start</label>
-              <input type="time" required value={newDoctor.working_start} onChange={e => setNewDoctor({...newDoctor, working_start: e.target.value})} className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary sm:text-sm bg-slate-50" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Working Hours End</label>
-              <input type="time" required value={newDoctor.working_end} onChange={e => setNewDoctor({...newDoctor, working_end: e.target.value})} className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary sm:text-sm bg-slate-50" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Slot Duration (Mins)</label>
-              <input type="number" required value={newDoctor.slot_duration} onChange={e => setNewDoctor({...newDoctor, slot_duration: e.target.value})} className="block w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-primary focus:border-primary sm:text-sm bg-slate-50" />
-            </div>
-            <div className="md:col-span-2 flex justify-end">
-              <button type="submit" className="px-6 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium shadow-sm transition-colors">
-                Save Doctor
-              </button>
-            </div>
-          </form>
-        </div>
+        <Card padding="p-0" className="overflow-hidden">
+          <div className="p-4 border-b border-border bg-slate-50">
+            <h2 className="text-sm font-bold text-main">Create Doctor Profile</h2>
+            <p className="text-xs text-muted mt-0.5">Fill in the details to register a new doctor.</p>
+          </div>
+          <div className="p-6">
+            <form onSubmit={handleAddSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-sm font-medium text-main mb-1.5">Name</label>
+                <input
+                  type="text" required
+                  value={newDoctor.name}
+                  onChange={e => setNewDoctor({...newDoctor, name: e.target.value})}
+                  className={inputClass}
+                  placeholder="Dr. John Doe"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-main mb-1.5">Email</label>
+                <input
+                  type="email" required
+                  value={newDoctor.email}
+                  onChange={e => setNewDoctor({...newDoctor, email: e.target.value})}
+                  className={inputClass}
+                  placeholder="doctor@example.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-main mb-1.5">Password</label>
+                <input
+                  type="password" required
+                  value={newDoctor.password}
+                  onChange={e => setNewDoctor({...newDoctor, password: e.target.value})}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-main mb-1.5">Specialization</label>
+                <input
+                  type="text" required
+                  value={newDoctor.specialization}
+                  onChange={e => setNewDoctor({...newDoctor, specialization: e.target.value})}
+                  className={inputClass}
+                  placeholder="E.g. Cardiologist"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-main mb-1.5">Working Hours Start</label>
+                <input
+                  type="time" required
+                  value={newDoctor.working_start}
+                  onChange={e => setNewDoctor({...newDoctor, working_start: e.target.value})}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-main mb-1.5">Working Hours End</label>
+                <input
+                  type="time" required
+                  value={newDoctor.working_end}
+                  onChange={e => setNewDoctor({...newDoctor, working_end: e.target.value})}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-main mb-1.5">Slot Duration (mins)</label>
+                <input
+                  type="number" required
+                  value={newDoctor.slot_duration}
+                  onChange={e => setNewDoctor({...newDoctor, slot_duration: e.target.value})}
+                  className={inputClass}
+                />
+              </div>
+              <div className="md:col-span-2 flex justify-end pt-2">
+                <Button type="submit" variant="primary">
+                  Save Doctor
+                </Button>
+              </div>
+            </form>
+          </div>
+        </Card>
       )}
 
-      {error ? (
-        <div className="p-4 bg-red-50 text-red-700 rounded-lg border border-red-100">{error}</div>
-      ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Specialization</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Working Hours</th>
-                <th className="px-6 py-3 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Slot Time</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-slate-200">
-              {doctors.map(doc => (
-                <tr key={doc.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-3">
-                      <div className="bg-sky-100 p-2 rounded-full"><Stethoscope className="w-4 h-4 text-primary" /></div>
-                      <div>
-                        <p className="text-sm font-bold text-slate-900">{doc.name}</p>
-                        <p className="text-xs text-slate-500">{doc.email}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                    {doc.specialization}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                    <div className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-slate-400" /> {doc.working_start?.substring(0,5)} - {doc.working_end?.substring(0,5)}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                    {doc.slot_duration} mins
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {/* Error */}
+      {error && <Alert type="error" message={error} />}
+
+      {/* Doctors Table */}
+      {!error && (
+        doctors.length === 0 ? (
+          <EmptyState
+            icon={Stethoscope}
+            title="No doctors found"
+            description="No doctor profiles have been added yet. Use the button above to add one."
+          />
+        ) : (
+          <Card padding="p-0" className="overflow-hidden">
+            {/* Desktop table */}
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-border">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-muted uppercase tracking-wider">Doctor</th>
+                    <th className="px-6 py-3 text-left text-xs font-bold text-muted uppercase tracking-wider">Specialization</th>
+                    <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-bold text-muted uppercase tracking-wider">Working Hours</th>
+                    <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-bold text-muted uppercase tracking-wider">Slot</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-border">
+                  {doctors.map(doc => (
+                    <tr key={doc.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-sky-100 flex items-center justify-center text-primary flex-shrink-0">
+                            <Stethoscope className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-main">{doc.name}</p>
+                            <p className="text-xs text-muted">{doc.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-main">
+                        {doc.specialization}
+                      </td>
+                      <td className="hidden sm:table-cell px-6 py-4 text-sm text-muted">
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span>{doc.working_start?.substring(0,5)} – {doc.working_end?.substring(0,5)}</span>
+                        </div>
+                      </td>
+                      <td className="hidden sm:table-cell px-6 py-4 text-sm text-muted">
+                        {doc.slot_duration} mins
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )
       )}
     </div>
   );

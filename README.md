@@ -1,135 +1,171 @@
-# Healthcare Appointment & Follow-up Manager
+# HealthSync — Modern Healthcare Appointment & Consultation Platform
 
-A modern, comprehensive SaaS healthcare platform allowing patients to book appointments, doctors to manage clinical notes, and admins to manage the clinic. Featuring AI-powered clinical summaries, Google Calendar sync, and robust email notification workflows.
+HealthSync is a modern Healthcare SaaS application designed to streamline clinic workflows, empower patients with intelligent scheduling, and assist healthcare providers with clinical documentation and automated patient follow-ups.
 
-## Features
+---
 
-- **Authentication**: JWT-based role authorization (Admin, Doctor, Patient).
-- **Smart Booking**: Patient appointment booking with strict database-level double-booking protection.
-- **Doctor Management**: Admin controls for specializations, working hours, slot durations, and leave management.
-- **AI Clinical Workflows**:
-  - **Pre-visit AI**: Auto-structures patient symptoms into chief complaints, urgency levels, and suggested clinical questions.
-  - **Post-visit AI**: Transforms doctor's clinical notes into a patient-friendly follow-up summary.
-- **Robust Background Notifications**:
-  - Booking, Rescheduling, and Cancellation emails.
-  - Automated Appointment Reminders (24-hour).
-  - Automated Medication Reminders (Parsed directly from prescriptions).
-  - Built-in retry mechanism to prevent external SMTP failures from blocking core clinical workflows.
-- **Google Calendar Sync**: Native OAuth 2.0 integration safely isolates Patient and Doctor calendar events.
+## 🌟 Key Features
 
-## Technology Stack
+### 👤 Patient Portal
+- **Specialization & Doctor Discovery**: Filter doctors by clinical specialization and view available schedules.
+- **Smart Appointment Booking**: Real-time slot availability with database-level double-booking protection.
+- **Appointment Management**: View upcoming, completed, and past visits; reschedule or cancel with immediate notification.
+- **Post-Visit Summaries**: Access AI-generated, patient-friendly consultation summaries and digital prescriptions.
+- **Google Calendar Sync**: Connect Google Calendar via OAuth 2.0 to automatically sync scheduled appointments.
 
-### Backend
-- **Node.js & Express**: Core REST API logic.
-- **MySQL2**: Relational database connection with atomic transactions.
-- **jsonwebtoken (JWT)**: Stateless authorization.
-- **OpenAI (gpt-3.5-turbo)**: Generative AI for clinical summarization.
-- **googleapis**: Google Calendar OAuth 2.0.
-- **nodemailer**: Email dispatch.
-- **node-cron**: Scheduled background jobs.
+### 🩺 Doctor Workspace
+- **Clinical Dashboard**: Real-time overview of today's schedule, patient load, and appointment statuses.
+- **AI Pre-Visit Triage**: Instant AI analysis of patient symptoms with structured urgency level (Low / Medium / High), chief complaint extraction, and 3 suggested clinical questions.
+- **Consultation Workspace**: Unified interface to review patient context, record clinical notes, write digital prescriptions, and complete visits.
+
+### 🛡️ Admin Management
+- **Doctor Directory**: Manage doctor profiles, specializations, working hours, and appointment slot durations.
+- **Leave Scheduling**: Mark doctor leave dates with automatic schedule protection and patient notification safeguards.
+
+### 🤖 AI-Powered Clinical Workflows (Groq / Qwen)
+- **Pre-Visit Analysis**: Structured JSON extraction for rapid triage before patient enters the clinic.
+- **Post-Visit Follow-Up**: Synthesizes doctor findings and prescribed medications into a clear, jargon-free summary (with reasoning and `<think>` tags automatically stripped for patient safety).
+
+### 📧 Automated Notifications & Resilient Email Queue (Brevo / Nodemailer)
+- **Immediate Triggers**: Instant email dispatch for booking confirmations, cancellations, and reschedules.
+- **Automated Cron Reminders**: 24-hour appointment reminders and medication frequency reminders.
+- **Resilient Retry Queue**: Failed email deliveries are tracked with status logs and automatically retried by background cron jobs.
+
+---
+
+## 🏗️ Technology Stack
 
 ### Frontend
-- **React & Vite**: Extremely fast presentation layer.
-- **React Router**: Role-based route protection.
-- **Tailwind CSS v4**: Utility-first professional healthcare UI styling.
-- **Axios**: HTTP client with request interceptors for JWT.
-- **Lucide React**: Clean, modern iconography.
+- **Framework**: React (Vite)
+- **Styling**: Tailwind CSS v4 (Design System Tokens)
+- **Routing**: React Router v6 (Role-Based Route Protection)
+- **Icons**: Lucide React
+- **HTTP Client**: Axios (with JWT interceptors)
 
-## Installation & Local Setup
+### Backend
+- **Runtime**: Node.js & Express.js
+- **Database**: MySQL2 (Connection Pool with Promise Support)
+- **Authentication**: JWT (Stateless Bearer Tokens) & Bcrypt
+- **AI Service**: Groq API (`qwen/qwen3.6-27b`)
+- **Email Service**: Nodemailer with Brevo SMTP
+- **Calendar Service**: Google APIs (`googleapis` OAuth 2.0)
+- **Task Scheduling**: `node-cron`
+
+---
+
+## 📁 Architecture Overview
+
+```
+Healthcare-appointment-manager/
+├── backend/
+│   ├── src/
+│   │   ├── controllers/      # Request handlers (auth, patient, doctor, admin, calendar)
+│   │   ├── db/               # MySQL connection pool and schema
+│   │   ├── jobs/             # Scheduled cron jobs (reminders, retry queue)
+│   │   ├── middleware/       # Auth JWT verification & role authorization
+│   │   ├── routes/           # REST API route declarations
+│   │   ├── services/         # LLM service (Groq), email service, notification service
+│   │   └── utils/            # HTML email templates and helpers
+│   ├── .env.example          # Environment variables template
+│   └── server.js             # Express application entry point
+├── frontend/
+│   ├── src/
+│   │   ├── components/       # Shared UI primitives (Button, Card, Badge, Alert, etc.)
+│   │   ├── context/          # AuthContext for session management
+│   │   ├── pages/            # Role-isolated views (Public, Patient, Doctor, Admin)
+│   │   ├── services/         # API client configuration
+│   │   └── index.css         # Tailwind v4 semantic design tokens
+│   ├── .env.example          # Frontend environment variables template
+│   └── vite.config.js        # Vite configuration
+└── README.md
+```
+
+---
+
+## 🚀 Local Setup & Installation
+
+### Prerequisites
+- Node.js (v18+)
+- MySQL Server (v8+)
+- Git
 
 ### 1. Database Setup
-Ensure you have MySQL installed.
-1. Connect to MySQL (e.g., via MySQL Workbench or CLI).
-2. Create the database: \`CREATE DATABASE healthcare_db;\`
-3. Execute the schema script located at \`backend/src/db/schema.sql\` to generate the tables.
+1. Start your local MySQL server.
+2. Create the database:
+   ```sql
+   CREATE DATABASE healthcare_db;
+   ```
+3. Import the initial schema located at `backend/src/db/schema.sql`:
+   ```bash
+   mysql -u root -p healthcare_db < backend/src/db/schema.sql
+   ```
 
 ### 2. Backend Setup
-\`\`\`bash
-cd backend
-npm install
-\`\`\`
-
-Create a \`.env\` file in the \`backend\` directory (use \`.env.example\` as a guide):
-\`\`\`env
-PORT=5000
-DATABASE_HOST=localhost
-DATABASE_USER=root
-DATABASE_PASSWORD=your_mysql_password
-DATABASE_NAME=healthcare_db
-
-JWT_SECRET=super_secret_jwt_key_here
-OPENAI_API_KEY=your_openai_api_key
-
-EMAIL_HOST=smtp.mailtrap.io
-EMAIL_PORT=2525
-EMAIL_USER=your_mailtrap_user
-EMAIL_PASSWORD=your_mailtrap_password
-EMAIL_FROM=noreply@clinic.com
-
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-GOOGLE_REDIRECT_URI=http://localhost:5000/api/calendar/callback
-\`\`\`
-
-Start the backend:
-\`\`\`bash
-npm run dev
-# OR
-node server.js
-\`\`\`
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   npm install
+   ```
+2. Create a `.env` file based on `.env.example`:
+   ```bash
+   cp .env.example .env
+   ```
+3. Configure your local `.env` values:
+   ```env
+   PORT=5000
+   DATABASE_HOST=localhost
+   DATABASE_USER=root
+   DATABASE_PASSWORD=your_mysql_password
+   DATABASE_NAME=healthcare_db
+   JWT_SECRET=your_secret_key_here
+   GROQ_API_KEY=your_groq_api_key
+   EMAIL_HOST=smtp-relay.brevo.com
+   EMAIL_PORT=587
+   EMAIL_USER=your_smtp_user
+   EMAIL_PASSWORD=your_smtp_password
+   EMAIL_FROM=noreply@healthsync.com
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   GOOGLE_REDIRECT_URI=http://localhost:5173/calendar/callback
+   FRONTEND_URL=http://localhost:5173
+   BACKEND_URL=http://localhost:5000
+   ```
+4. Start the backend server:
+   ```bash
+   npm run dev
+   # or
+   node server.js
+   ```
 
 ### 3. Frontend Setup
-\`\`\`bash
-cd frontend
-npm install
-\`\`\`
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   npm install
+   ```
+2. Create a `.env` file:
+   ```bash
+   cp .env.example .env
+   ```
+3. Ensure the API URL matches your backend:
+   ```env
+   VITE_BACKEND_URL=http://localhost:5000/api
+   ```
+4. Start the frontend development server:
+   ```bash
+   npm run dev
+   ```
+5. Open your browser at `http://localhost:5173`.
 
-Create a \`.env\` file in the \`frontend\` directory:
-\`\`\`env
-VITE_BACKEND_URL=http://localhost:5000/api
-\`\`\`
+---
 
-Start the frontend:
-\`\`\`bash
-npm run dev
-\`\`\`
-The application will be accessible at \`http://localhost:5173\`.
+## 🔒 Security & Best Practices
+- **Secret Isolation**: All API keys, credentials, and tokens are stored in `.env` and strictly excluded from version control via `.gitignore`.
+- **Role Isolation**: Express middleware verifies JWT signature and validates user role (`PATIENT`, `DOCTOR`, `ADMIN`) on all protected routes.
+- **SQL Injection Prevention**: All database queries utilize parameterized prepared statements via `mysql2/promise`.
+- **Patient Privacy**: Post-visit summaries are strictly scoped to the doctor's recorded notes without hallucinated diagnoses.
 
-## API Documentation
+---
 
-| Method | Endpoint | Role | Description |
-|--------|----------|------|-------------|
-| POST | \`/api/auth/register\` | PUBLIC | Register a new user |
-| POST | \`/api/auth/login\` | PUBLIC | Authenticate and return JWT |
-| GET | \`/api/patient/doctors/search\` | PATIENT/ADMIN | List/Search doctors |
-| GET | \`/api/patient/slots\` | PATIENT | Get available slots for a date |
-| POST | \`/api/patient/appointments/book\` | PATIENT | Book a new appointment |
-| PUT | \`/api/patient/appointments/:id/cancel\`| PATIENT | Cancel appointment |
-| PUT | \`/api/patient/appointments/:id/reschedule\`| PATIENT | Reschedule appointment |
-| GET | \`/api/doctor/appointments\` | DOCTOR | Get doctor's schedule |
-| PUT | \`/api/doctor/appointments/:id/consultation\`| DOCTOR | Submit clinical notes/prescription |
-| POST | \`/api/admin/doctors\` | ADMIN | Create a doctor profile |
-| POST | \`/api/admin/doctors/leave\` | ADMIN | Mark a doctor as on leave |
-| GET | \`/api/calendar/auth\` | AUTHENTICATED| Get Google OAuth URL |
-
-## AI Prompts
-
-**Pre-visit Summary (Patient Symptoms):**
-> You are a medical assistant AI. A patient has booked an appointment with the following symptoms: "[symptoms]". Provide a JSON response with exactly these fields: "urgency_level" (Low, Medium, or High), "chief_complaint" (a concise 1-2 sentence summary), and "suggested_questions" (an array of exactly 3 relevant questions the doctor should ask the patient). Do not include any other text.
-
-**Post-visit Summary (Doctor Notes):**
-> You are a helpful medical assistant. A doctor has completed a consultation with the following clinical notes: "[notes]". Generate a patient-friendly summary of the visit. Avoid overly complex medical jargon, clearly state the diagnosis or findings, and summarize the next steps or follow-up instructions.
-
-## Google Calendar Setup
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
-2. Create a new project and enable the **Google Calendar API**.
-3. Configure the OAuth consent screen.
-4. Create **OAuth Client ID** credentials (Web application type).
-5. Set the Authorized redirect URI to \`http://localhost:5000/api/calendar/callback\` (or your production URL).
-6. Copy the Client ID and Secret to your backend \`.env\`.
-
-## Deployment Guide
-1. **Database**: Provision a managed MySQL instance (e.g., AWS RDS, DigitalOcean Managed DB). 
-2. **Backend**: Deploy the Node.js server to Heroku, Render, or an EC2 instance. Update the \`.env\` file with production database and frontend URLs.
-3. **Frontend**: Build the React app (\`npm run build\`) and deploy the \`dist\` folder to Vercel, Netlify, or AWS S3. Ensure \`VITE_BACKEND_URL\` points to the production backend API.
-4. **CORS**: Ensure the backend \`cors()\` middleware is configured to accept requests exclusively from the production frontend domain.
+## 📜 License
+This project is open source and available under the [MIT License](LICENSE).

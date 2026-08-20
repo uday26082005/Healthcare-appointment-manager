@@ -53,7 +53,15 @@ typings/
 
 # dotenv environment variables file
 .env
+.env.local
+.env.*.local
 .env.test
+!.env.example
+
+# Build directories
+dist/
+dist-ssr/
+build/
 
 # Mac OS
 .DS_Store
