@@ -361,7 +361,7 @@ const rescheduleAppointment = asyncHandler(async (req, res) => {
   try {
     // Check if slot is booked by someone else
     const [existing] = await db.execute(
-      'SELECT id FROM appointments WHERE doctor_id = ? AND appointment_date = ? AND start_time = ? AND status != 'CANCELLED'',
+      "SELECT id FROM appointments WHERE doctor_id = ? AND appointment_date = ? AND start_time = ? AND status != 'CANCELLED'",
       [appt.doctor_id, date, start_time]
     );
     if (existing.length > 0) {
