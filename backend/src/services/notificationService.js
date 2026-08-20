@@ -6,7 +6,7 @@ const queueAndSendNotification = async (appointmentId, recipientId, email, type,
   let notificationId;
   try {
     const [res] = await connection.execute(
-      'INSERT INTO notifications (appointment_id, recipient_id, notification_type, status, subject, message_body) VALUES (?, ?, ?, "PENDING", ?, ?)',
+      'INSERT INTO notifications (appointment_id, recipient_id, notification_type, status, subject, message_body) VALUES (?, ?, ?, \'PENDING\', ?, ?)',
       [appointmentId, recipientId, type, subject, message]
     );
     notificationId = res.insertId;
@@ -27,12 +27,12 @@ const queueAndSendNotification = async (appointmentId, recipientId, email, type,
     });
     
     await db.execute(
-      'UPDATE notifications SET status = "SENT", sent_at = NOW() WHERE id = ?',
+      'UPDATE notifications SET status = \'SENT\', sent_at = NOW() WHERE id = ?',
       [notificationId]
     );
   } catch (emailError) {
     await db.execute(
-      'UPDATE notifications SET status = "FAILED", last_error = ? WHERE id = ?',
+      'UPDATE notifications SET status = \'FAILED\', last_error = ? WHERE id = ?',
       [emailError.message, notificationId]
     );
   }

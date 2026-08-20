@@ -29,13 +29,13 @@ const initCronJobs = () => {
     const connection = await db.getConnection();
     try {
       const [notifications] = await connection.execute(
-        'SELECT n.id, n.subject, n.message_body, n.retry_count, u.email FROM notifications n JOIN users u ON n.recipient_id = u.id WHERE n.status = "FAILED" AND n.retry_count < 3'
+        'SELECT n.id, n.subject, n.message_body, n.retry_count, u.email FROM notifications n JOIN users u ON n.recipient_id = u.id WHERE n.status = \'FAILED\' AND n.retry_count < 3'
       );
 
       for (const n of notifications) {
         try {
           await sendEmail({ to: n.email, subject: n.subject, text: n.message_body });
-          await connection.execute('UPDATE notifications SET status = "SENT", sent_at = NOW() WHERE id = ?', [n.id]);
+          await connection.execute('UPDATE notifications SET status = \'SENT\', sent_at = NOW() WHERE id = ?', [n.id]);
         } catch (error) {
           await connection.execute('UPDATE notifications SET retry_count = retry_count + 1, last_error = ? WHERE id = ?', [error.message, n.id]);
         }
@@ -67,7 +67,7 @@ const initCronJobs = () => {
       for (const appt of appointments) {
         // Patient Reminder Logic
         try {
-          const [pNotif] = await connection.execute('SELECT id FROM notifications WHERE appointment_id = ? AND recipient_id = ? AND notification_type = "REMINDER"', [appt.id, appt.patient_id]);
+          const [pNotif] = await connection.execute('SELECT id FROM notifications WHERE appointment_id = ? AND recipient_id = ? AND notification_type = \'REMINDER\'', [appt.id, appt.patient_id]);
           if (pNotif.length === 0) {
             const subject = 'Upcoming Appointment Reminder';
             const message = `Hello ${appt.patient_name},\nThis is a reminder for your upcoming appointment with ${appt.doctor_name} on ${appt.appointment_date} at ${appt.start_time}.`;
@@ -77,20 +77,20 @@ const initCronJobs = () => {
               date: appt.appointment_date,
               startTime: appt.start_time
             });
-            const [res] = await connection.execute('INSERT INTO notifications (appointment_id, recipient_id, notification_type, status, subject, message_body) VALUES (?, ?, "REMINDER", "PENDING", ?, ?)', [appt.id, appt.patient_id, subject, message]);
+            const [res] = await connection.execute('INSERT INTO notifications (appointment_id, recipient_id, notification_type, status, subject, message_body) VALUES (?, ?, \'REMINDER\', \'PENDING\', ?, ?)', [appt.id, appt.patient_id, subject, message]);
             const notificationId = res.insertId;
             try {
               await sendEmail({ to: appt.patient_email, subject, text: message, html: htmlMessage });
-              await connection.execute('UPDATE notifications SET status = "SENT", sent_at = NOW() WHERE id = ?', [notificationId]);
+              await connection.execute('UPDATE notifications SET status = \'SENT\', sent_at = NOW() WHERE id = ?', [notificationId]);
             } catch (err) {
-              await connection.execute('UPDATE notifications SET status = "FAILED", last_error = ? WHERE id = ?', [err.message, notificationId]);
+              await connection.execute('UPDATE notifications SET status = \'FAILED\', last_error = ? WHERE id = ?', [err.message, notificationId]);
             }
           }
         } catch (err) { console.error('Patient Reminder Error:', err); }
 
         // Doctor Reminder Logic
         try {
-          const [dNotif] = await connection.execute('SELECT id FROM notifications WHERE appointment_id = ? AND recipient_id = ? AND notification_type = "REMINDER"', [appt.id, appt.doctor_user_id]);
+          const [dNotif] = await connection.execute('SELECT id FROM notifications WHERE appointment_id = ? AND recipient_id = ? AND notification_type = \'REMINDER\'', [appt.id, appt.doctor_user_id]);
           if (dNotif.length === 0) {
             const subject = 'Upcoming Appointment Reminder';
             const message = `Hello ${appt.doctor_name},\nThis is a reminder for your upcoming appointment with patient ${appt.patient_name} on ${appt.appointment_date} at ${appt.start_time}.`;
@@ -100,13 +100,13 @@ const initCronJobs = () => {
               date: appt.appointment_date,
               startTime: appt.start_time
             });
-            const [res] = await connection.execute('INSERT INTO notifications (appointment_id, recipient_id, notification_type, status, subject, message_body) VALUES (?, ?, "REMINDER", "PENDING", ?, ?)', [appt.id, appt.doctor_user_id, subject, message]);
+            const [res] = await connection.execute('INSERT INTO notifications (appointment_id, recipient_id, notification_type, status, subject, message_body) VALUES (?, ?, \'REMINDER\', \'PENDING\', ?, ?)', [appt.id, appt.doctor_user_id, subject, message]);
             const notificationId = res.insertId;
             try {
               await sendEmail({ to: appt.doctor_email, subject, text: message, html: htmlMessage });
-              await connection.execute('UPDATE notifications SET status = "SENT", sent_at = NOW() WHERE id = ?', [notificationId]);
+              await connection.execute('UPDATE notifications SET status = \'SENT\', sent_at = NOW() WHERE id = ?', [notificationId]);
             } catch (err) {
-              await connection.execute('UPDATE notifications SET status = "FAILED", last_error = ? WHERE id = ?', [err.message, notificationId]);
+              await connection.execute('UPDATE notifications SET status = \'FAILED\', last_error = ? WHERE id = ?', [err.message, notificationId]);
             }
           }
         } catch (err) { console.error('Doctor Reminder Error:', err); }
