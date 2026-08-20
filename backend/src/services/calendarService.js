@@ -11,6 +11,7 @@ const oauth2Client = new google.auth.OAuth2(
 const getAuthUrl = (userId) => {
   return oauth2Client.generateAuthUrl({
     access_type: 'offline',
+    prompt: 'consent select_account',
     scope: ['https://www.googleapis.com/auth/calendar.events'],
     state: userId.toString()
   });
