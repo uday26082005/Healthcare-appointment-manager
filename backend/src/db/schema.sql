@@ -4,6 +4,8 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(255) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
   role ENUM('PATIENT', 'DOCTOR', 'ADMIN') NOT NULL,
+  google_access_token VARCHAR(255),
+  google_refresh_token VARCHAR(255),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -74,7 +76,8 @@ CREATE TABLE IF NOT EXISTS calendar_events (
   doctor_event_id VARCHAR(255),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE CASCADE
+  FOREIGN KEY (appointment_id) REFERENCES appointments(id) ON DELETE CASCADE,
+  UNIQUE(appointment_id)
 );
 
 CREATE TABLE IF NOT EXISTS notifications (
@@ -83,6 +86,8 @@ CREATE TABLE IF NOT EXISTS notifications (
   recipient_id INT NOT NULL,
   notification_type ENUM('BOOKING', 'REMINDER', 'CANCELLATION') NOT NULL,
   status ENUM('PENDING', 'SENT', 'FAILED') NOT NULL DEFAULT 'PENDING',
+  subject VARCHAR(255),
+  message_body TEXT,
   retry_count INT DEFAULT 0,
   scheduled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   sent_at TIMESTAMP NULL,
@@ -97,6 +102,7 @@ CREATE TABLE IF NOT EXISTS medication_reminders (
   patient_id INT NOT NULL,
   medication VARCHAR(255) NOT NULL,
   frequency VARCHAR(255) NOT NULL,
+  interval_hours INT DEFAULT 24,
   next_reminder TIMESTAMP NOT NULL,
   status ENUM('ACTIVE', 'STOPPED', 'COMPLETED') NOT NULL DEFAULT 'ACTIVE',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

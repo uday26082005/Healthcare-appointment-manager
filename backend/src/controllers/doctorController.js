@@ -70,7 +70,7 @@ const submitConsultation = asyncHandler(async (req, res) => {
   // 4 & 5. Generate Post-Visit AI Summary (Graceful failure)
   let aiSummaryStatus = 'Success';
   try {
-    const summary = await llmService.generatePostVisitSummary(notes);
+    const summary = await llmService.generatePostVisitSummary(notes, prescription);
     await db.execute(
       'UPDATE appointments SET ai_postvisit_summary = ? WHERE id = ?',
       [summary, appointmentId]

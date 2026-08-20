@@ -16,8 +16,11 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-async-handler": "^1.2.0",
+    "googleapis": "^176.0.0",
     "jsonwebtoken": "^9.0.3",
-    "mysql2": "^3.23.3"
+    "mysql2": "^3.23.3",
+    "node-cron": "^4.6.0",
+    "nodemailer": "^9.0.5"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

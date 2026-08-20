@@ -1,27 +1,51 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
+import Navbar from './components/Navbar';
+import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import AdminDashboard from './pages/AdminDashboard';
-import PatientDashboard from './pages/PatientDashboard';
-import DoctorDashboard from './pages/DoctorDashboard';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import PatientDashboard from './pages/patient/PatientDashboard';
+import DoctorDashboard from './pages/doctor/DoctorDashboard';
+import ConnectCalendarCallback from './pages/ConnectCalendarCallback';
+
+const ProtectedRoute = ({ children, allowedRole }) => {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (allowedRole && user.role !== allowedRole) {
+    // Redirect to their respective dashboard
+    if (user.role === 'ADMIN') return <Navigate to="/admin" replace />;
+    if (user.role === 'DOCTOR') return <Navigate to="/doctor" replace />;
+    if (user.role === 'PATIENT') return <Navigate to="/patient" replace />;
+  }
+  return children;
+};
 
 function App() {
   return (
     <Router>
-      <div className="app-container" style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-        <nav style={{ marginBottom: '20px' }}>
-          <h1 style={{ margin: 0, paddingBottom: '10px', borderBottom: '1px solid #ccc' }}>
-            Healthcare Appointment Manager
-          </h1>
-        </nav>
-        <Routes>
-          <Route path="/" element={<Navigate to="/login" />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/admin/*" element={<AdminDashboard />} />
-          <Route path="/patient/*" element={<PatientDashboard />} />
-          <Route path="/doctor/*" element={<DoctorDashboard />} />
-        </Routes>
+      <div className="min-h-screen bg-slate-50 flex flex-col">
+        <Navbar />
+        <main className="flex-grow flex flex-col">
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/calendar/callback" element={<ConnectCalendarCallback />} />
+            
+            <Route path="/admin/*" element={
+              <ProtectedRoute allowedRole="ADMIN"><AdminDashboard /></ProtectedRoute>
+            } />
+            
+            <Route path="/patient/*" element={
+              <ProtectedRoute allowedRole="PATIENT"><PatientDashboard /></ProtectedRoute>
+            } />
+            
+            <Route path="/doctor/*" element={
+              <ProtectedRoute allowedRole="DOCTOR"><DoctorDashboard /></ProtectedRoute>
+            } />
+          </Routes>
+        </main>
       </div>
     </Router>
   );
