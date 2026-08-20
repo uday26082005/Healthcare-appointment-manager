@@ -67,13 +67,13 @@ const addDoctorLeave = asyncHandler(async (req, res) => {
 
     // Find and cancel appointments for this date
     const [appointments] = await connection.execute(
-      'SELECT id FROM appointments WHERE doctor_id = ? AND appointment_date = ? AND status = "BOOKED"',
+      'SELECT id FROM appointments WHERE doctor_id = ? AND appointment_date = ? AND status = \'BOOKED\'',
       [doctorId, leave_date]
     );
 
     if (appointments.length > 0) {
       await connection.execute(
-        'UPDATE appointments SET status = "CANCELLED" WHERE doctor_id = ? AND appointment_date = ? AND status = "BOOKED"',
+        'UPDATE appointments SET status = \'CANCELLED\' WHERE doctor_id = ? AND appointment_date = ? AND status = \'BOOKED\'',
         [doctorId, leave_date]
       );
       

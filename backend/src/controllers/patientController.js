@@ -64,7 +64,7 @@ const getAvailableSlots = asyncHandler(async (req, res) => {
 
   // 4. Get booked/held slots
   const [booked] = await db.execute(
-    'SELECT start_time FROM appointments WHERE doctor_id = ? AND appointment_date = ? AND status != "CANCELLED"',
+    'SELECT start_time FROM appointments WHERE doctor_id = ? AND appointment_date = ? AND status != \'CANCELLED\'',
     [doctorId, date]
   );
   
@@ -288,7 +288,7 @@ const cancelAppointment = asyncHandler(async (req, res) => {
   const patientId = req.user.id;
 
   const [appointments] = await db.execute(
-    'SELECT a.*, d.user_id as doctor_user_id FROM appointments a JOIN doctors d ON a.doctor_id = d.id WHERE a.id = ? AND a.patient_id = ? AND a.status = "BOOKED"',
+    'SELECT a.*, d.user_id as doctor_user_id FROM appointments a JOIN doctors d ON a.doctor_id = d.id WHERE a.id = ? AND a.patient_id = ? AND a.status = \'BOOKED\'',
     [appointmentId, patientId]
   );
 
@@ -298,7 +298,7 @@ const cancelAppointment = asyncHandler(async (req, res) => {
 
   const appt = appointments[0];
 
-  await db.execute('UPDATE appointments SET status = "CANCELLED" WHERE id = ?', [appointmentId]);
+  await db.execute('UPDATE appointments SET status = \'CANCELLED\' WHERE id = ?', [appointmentId]);
   res.json({ message: 'Appointment cancelled successfully' });
 
   // Trigger Notifications
@@ -348,7 +348,7 @@ const rescheduleAppointment = asyncHandler(async (req, res) => {
   const { date, start_time, end_time } = req.body;
 
   const [appointments] = await db.execute(
-    'SELECT a.*, d.user_id as doctor_user_id FROM appointments a JOIN doctors d ON a.doctor_id = d.id WHERE a.id = ? AND a.patient_id = ? AND a.status = "BOOKED"',
+    'SELECT a.*, d.user_id as doctor_user_id FROM appointments a JOIN doctors d ON a.doctor_id = d.id WHERE a.id = ? AND a.patient_id = ? AND a.status = \'BOOKED\'',
     [appointmentId, patientId]
   );
 

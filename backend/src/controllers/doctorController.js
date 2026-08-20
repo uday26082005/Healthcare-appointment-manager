@@ -63,7 +63,7 @@ const submitConsultation = asyncHandler(async (req, res) => {
 
   // 2 & 3. Save clinical notes and prescription
   await db.execute(
-    'UPDATE appointments SET doctor_notes = ?, prescription = ?, status = "COMPLETED" WHERE id = ?',
+    'UPDATE appointments SET doctor_notes = ?, prescription = ?, status = \'COMPLETED\' WHERE id = ?',
     [notes, prescription, appointmentId]
   );
 
