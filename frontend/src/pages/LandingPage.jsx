@@ -1,5 +1,4 @@
-import { Link, Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 import {
   CalendarCheck,
   Clock,
@@ -11,13 +10,6 @@ import {
 } from 'lucide-react';
 
 const LandingPage = () => {
-  const { user } = useAuth();
-
-  if (user) {
-    if (user.role === 'ADMIN') return <Navigate to="/admin" replace />;
-    if (user.role === 'DOCTOR') return <Navigate to="/doctor" replace />;
-    if (user.role === 'PATIENT') return <Navigate to="/patient" replace />;
-  }
 
   const features = [
     {
